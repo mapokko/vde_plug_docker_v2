@@ -1,0 +1,13 @@
+[Unit]
+Description=VDE network plugin for Docker
+Documentation=https://github.com/phocs/vde_plug_docker
+Before=docker.service
+After=network.target vde_plug_docker.socket
+Requires=vde_plug_docker.socket docker.service
+
+[Service]
+ExecStart=/home/fabio/Desktop/phocs2/vde_plug_docker --debug
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
