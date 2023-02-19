@@ -16,6 +16,7 @@ SYSTEMD_DIR := /lib/systemd/system
 LIB_DOCKER_DIR := /usr/lib/docker
 
 all: build
+restart: uninstall install
 plugin: build plugin-build
 
 build:
@@ -23,6 +24,9 @@ build:
 	ln -sf vendor ${GO_SRC}
 	go build -v . || true
 	rm -rf ${GO_SRC}
+
+buildeasy:
+	go build -v . || true
 
 install:
 	cp $(SERVICE_DIR)/${SOCKET} ${SYSTEMD_DIR}/
