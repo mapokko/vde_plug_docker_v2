@@ -6,7 +6,7 @@ After=network.target vde_plug_docker.socket
 Requires=vde_plug_docker.socket docker.service
 
 [Service]
-ExecStart=/home/fabio/Desktop/phocs3/vde_plug_docker_v2/vde_plug_docker --debug
+ExecStart=/usr/local/bin/vde_plug_docker
 Restart=on-failure
 
 [Install]

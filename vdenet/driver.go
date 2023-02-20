@@ -108,6 +108,11 @@ func (this *Driver) CreateNetwork(r *network.CreateNetworkRequest) error {
 		ifprefix = IfPrefixDefault
 	}
 
+	// error if interface name prefix exceeds 4 characters
+	if len(ifprefix) > 4 {
+		return types.BadRequestErrorf("Interface prefix exceeds 4 character limit.")
+	}
+
 	// if there is any IPv6 information, set it
 	if r.IPv6Data != nil && len(r.IPv6Data) > 0 {
 		ipv6pool = r.IPv6Data[0].Pool
@@ -202,12 +207,13 @@ func (this *Driver) CreateEndpoint(r *network.CreateEndpointRequest) (*network.C
 		return nil, types.BadRequestErrorf("EndpointID already exists.")
 	}
 
-	// populates new endpoint with initial stats, might be useless
-	netw.Endpoints[r.EndpointID] = endpoint.NewEndpointStat(r)
+	// populates new endpoint with initial stats
+	netw.Endpoints[r.EndpointID] = endpoint.NewEndpointStat(r, netw.IfPrefix)
 
 	// create reponse using CreateEndpointResponse provided by go-plugins-helpers
 	response := &network.CreateEndpointResponse{
 		// assings and empty EndpointInterface to the Interface attribute
+		// it must be empty when r.Iterface is non-nil
 		Interface: &network.EndpointInterface{},
 	}
 
@@ -249,7 +255,7 @@ func (this *Driver) DeleteEndpoint(r *network.DeleteEndpointRequest) error {
 	// deletes endppoint data from driver
 	delete(this.Networks[r.NetworkID].Endpoints, r.EndpointID)
 
-	// saves driver ins datastore
+	// saves driver in datastore
 	_ = datastore.Store(&this)
 	return nil
 }
@@ -280,8 +286,11 @@ func (this *Driver) EndpointInfo(r *network.InfoRequest) (*network.InfoResponse,
 	// set reponse id with provided ID
 	info.Value["id"] = r.EndpointID
 
-	// set the interface name in the docker network namespace
+	// set the TAP interface name in the docker network namespace
 	info.Value["srcName"] = this.Networks[r.NetworkID].Endpoints[r.EndpointID].IfName
+
+	log.Debugf("In EndpointInfo: ", this.Networks[r.NetworkID].Endpoints[r.EndpointID].IfName)
+
 	return info, nil
 }
 
@@ -309,7 +318,7 @@ func (this *Driver) Join(r *network.JoinRequest) (*network.JoinResponse, error) 
 		return nil, types.NotFoundErrorf("Endpoint not found.")
 	}
 
-	// creates and links a tap device with the endpoint's IP addresses
+	// sets up a tap device with the endpoint's IP addresses
 	if edpt.LinkAdd() != nil {
 		return nil, types.RetryErrorf("Failed link create.")
 	}
@@ -319,6 +328,9 @@ func (this *Driver) Join(r *network.JoinRequest) (*network.JoinResponse, error) 
 		edpt.LinkDel()
 		return nil, types.NotFoundErrorf("Failed plug to interface", err)
 	}
+
+	// add SandboxKey to Endpoint struct
+	edpt.SandboxKey = r.SandboxKey
 
 	// remove subnet mask from IPv4 gateway
 	if netw.IPv4Gateway != "" {
@@ -333,7 +345,7 @@ func (this *Driver) Join(r *network.JoinRequest) (*network.JoinResponse, error) 
 	// create a response for the join operation, following the pattern sepcified in the documentation
 	response := &network.JoinResponse{
 
-		// information about the interface created for this endpoint, docker moves it inside the sandbox
+		// information about the host level TAP interface created for this endpoint, LibNetwork moves it inside the sandbox
 		InterfaceName: network.InterfaceName{
 			// name of the TAP interface
 			SrcName: edpt.IfName,

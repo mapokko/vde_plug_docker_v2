@@ -13,7 +13,7 @@ DH_PLUGIN_TAG ?= latest
 DH_PLUGIN_NAME := $(DH_REPO)vde
 
 SYSTEMD_DIR := /lib/systemd/system
-LIB_DOCKER_DIR := /usr/lib/docker
+LIB_DOCKER_DIR := /usr/local/bin
 
 all: build
 restart: uninstall install
@@ -29,6 +29,7 @@ buildeasy:
 	go build -v . || true
 
 install:
+	cp ./${PLUGIN_NAME} ${LIB_DOCKER_DIR}/${PLUGIN_NAME}
 	cp $(SERVICE_DIR)/${SOCKET} ${SYSTEMD_DIR}/
 	cp $(SERVICE_DIR)/${SERVICE} ${SYSTEMD_DIR}/
 	systemctl enable ${PLUGIN_NAME}
@@ -40,6 +41,8 @@ uninstall:
 	systemctl disable ${SERVICE}
 	rm ${SYSTEMD_DIR}/${SERVICE}
 	rm ${SYSTEMD_DIR}/${SOCKET}
+	rm ${LIB_DOCKER_DIR}/${PLUGIN_NAME}
+
 
 plugin-build:
 	docker build -f ${DH_DOCKERFILE} -t ${DH_PLUGIN_NAME}:rootfs .

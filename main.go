@@ -53,7 +53,7 @@ func main() {
 	// get network driver
 	d := vdenet.NewDriver(dsPath, *dsClean)
 
-	// provide docker helper functions with network driver
+	// provide the docker NetworkController with the network driver
 	h := network.NewHandler(&d)
 
 	// creates Unix socket if doesn't exists and starts listening for requests, socket name is first parameter

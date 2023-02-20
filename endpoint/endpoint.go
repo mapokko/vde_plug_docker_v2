@@ -20,7 +20,7 @@ type EndpointStat struct {
 	// used to hold the vde plug PID that connects the endpoint to the vde network
 	Plugger uintptr `json:"Plugger"`
 
-	// used as the name of the TAP device associated to the endpoint
+	// used as the name of the TAP device associated to the endpoint, maximum length of 15 chars
 	IfName     string `json:"IfName"`
 	SandboxKey string `json:"SandboxKey"`
 
@@ -35,12 +35,12 @@ type EndpointStat struct {
 }
 
 // Returns Endpoint Stats for new endpoint
-func NewEndpointStat(r *network.CreateEndpointRequest) *EndpointStat {
+func NewEndpointStat(r *network.CreateEndpointRequest, IfPrefix string) *EndpointStat {
 
 	// new endpointstat instance
 	new := EndpointStat{
 		Plugger:     0,
-		IfName:      "vde" + r.EndpointID[:11],
+		IfName:      IfPrefix + r.EndpointID[:11],
 		SandboxKey:  "",
 		IPv4Address: r.Interface.Address,
 		IPv6Address: r.Interface.AddressIPv6,
@@ -54,6 +54,7 @@ func NewEndpointStat(r *network.CreateEndpointRequest) *EndpointStat {
 	return &new
 }
 
+// Creates a TAP device for the endpoint
 func (this *EndpointStat) LinkAdd() error {
 
 	// create attributes struct for new net device with default values
@@ -102,7 +103,7 @@ func (this *EndpointStat) LinkDel() error {
 	return err
 }
 
-// Created a VDE plug between endpoint and vdenetwork
+// Creates a VDE plug between endpoint and vde network
 func (this *EndpointStat) LinkPlugTo(sock string) error {
 	log.Debugf("LinkPlugTo [ %s ] [ %s ]", this.IfName, sock)
 
@@ -114,7 +115,7 @@ func (this *EndpointStat) LinkPlugTo(sock string) error {
 	return nil
 }
 
-// Stops the vde plug that connects the endpoint to the VDE network
+// Kills the vde plug process that connects the endpoint to the VDE network
 func (this *EndpointStat) LinkPlugStop() {
 	C.vdeplug_leave(C.uintptr_t(this.Plugger))
 	this.Plugger = 0
