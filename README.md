@@ -24,7 +24,7 @@ install daemon services
 
     $ sudo make install
 
-A VM image with all the required dependencies can be downloaded [Here]([www.google.com](https://liveunibo-my.sharepoint.com/:u:/g/personal/fabio_mirza_studio_unibo_it/EZEcTcTMJPFHu3DKgT2fSPoB0KLjc1P5GedZMcK6kyhA3w?e=k9fcTJ)). The VM requires qemu-system-x86 to run.
+A VM image with all the required dependencies can be downloaded [Here](https://liveunibo-my.sharepoint.com/:u:/g/personal/fabio_mirza_studio_unibo_it/EZEcTcTMJPFHu3DKgT2fSPoB0KLjc1P5GedZMcK6kyhA3w?e=k9fcTJ). The VM requires qemu-system-x86 to run.
 
 Start the VM and login to "user" with password "virtualsquare"
 
